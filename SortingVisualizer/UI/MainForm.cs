@@ -1,7 +1,4 @@
-using System;
-using System.Threading;
-using System.Windows.Forms;
-using System.Collections.Generic;
+
 
 namespace SortingVisualizer
 {
@@ -29,7 +26,6 @@ namespace SortingVisualizer
             drawer = new ArrayDrawer(panelDisplay);
             context = new SortContext();
 
-            // Добавляем алгоритмы в comboBox
             comboAlgorithms.Items.Add(new BubbleSort());
             comboAlgorithms.Items.Add(new SelectionSort());
             comboAlgorithms.Items.Add(new InsertionSort());
@@ -66,7 +62,6 @@ namespace SortingVisualizer
                 return;
             }
 
-            // СБРОС СЧЁТЧИКОВ
             MainForm.LastComparisons = 0;
             MainForm.LastSwaps = 0;
             MainForm.LastWrites = 0;
@@ -75,7 +70,6 @@ namespace SortingVisualizer
             lblSwaps.Text       = "Swaps: 0";
             lblWrites.Text      = "Writes: 0";
 
-            // БЛОКИРУЕМ КНОПКИ
             btnStart.Enabled = false;
             btnGenerate.Enabled = false;
             btnCompare.Enabled = false;
@@ -107,11 +101,9 @@ namespace SortingVisualizer
             }
             catch (OperationCanceledException)
             {
-                // нормально
             }
             finally
             {
-                // РАЗБЛОКИРУЕМ КНОПКИ
                 btnStart.Enabled = true;
                 btnGenerate.Enabled = true;
                 btnCompare.Enabled = true;
@@ -169,7 +161,7 @@ namespace SortingVisualizer
 
                 await alg.Sort(
                     arrCopy,
-                    step => { }, // без визуализации
+                    step => { }, 
                     0,
                     CancellationToken.None
                 );
@@ -186,7 +178,6 @@ namespace SortingVisualizer
                 });
             }
 
-            // отображаем результаты в таблице
             var form = new ComparisonForm();
             form.ShowResults(results);
             form.Show();

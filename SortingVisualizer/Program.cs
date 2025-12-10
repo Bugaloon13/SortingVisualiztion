@@ -1,7 +1,4 @@
 
-using System;
-using System.Windows.Forms;
-
 namespace SortingVisualizer     
 {
     internal static class Program
@@ -11,7 +8,7 @@ namespace SortingVisualizer
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());   // если форма называется MainForm
+            Application.Run(new MainForm());
         }
     }
 }
