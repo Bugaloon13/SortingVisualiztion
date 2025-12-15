@@ -12,3 +12,4 @@ C:\Users\ilyak\RiderProjects\SortingVisualizer\SortingVisualizer\obj\Debug\net8.
 C:\Users\ilyak\RiderProjects\SortingVisualizer\SortingVisualizer\obj\Debug\net8.0-windows\SortingVisualizer.pdb
 C:\Users\ilyak\RiderProjects\SortingVisualizer\SortingVisualizer\obj\Debug\net8.0-windows\SortingVisualizer.genruntimeconfig.cache
 C:\Users\ilyak\RiderProjects\SortingVisualizer\SortingVisualizer\obj\Debug\net8.0-windows\ref\SortingVisualizer.dll
+C:\Users\ilyak\RiderProjects\SortingVisualizer\SortingVisualizer\obj\Debug\net8.0-windows\SortingVisualizer.sourcelink.json

@@ -1,4 +1,5 @@
 
+using SortingVisualizer.Visualization;
 
 namespace SortingVisualizer
 {
@@ -7,67 +8,49 @@ namespace SortingVisualizer
         public string Name => "Merge Sort";
 
         public async Task Sort(
-            int[] arr,
-            Action<SortStep> onStep,
+            int[] array,
+            System.Action<SortStep> onStep,
             int delay,
-            CancellationToken token)
+            CancellationToken token,
+            System.Action onCompare,
+            System.Action onSwap,
+            System.Action onWrite)
         {
-            MainForm.LastComparisons = 0;
-            MainForm.LastSwaps = 0;     // mergesort = 0 swaps всегда
-            MainForm.LastWrites = 0;
+            await Merge(array, 0, array.Length - 1);
 
-            await MergeRec(arr, 0, arr.Length - 1, onStep, delay, token);
-
-            onStep(new SortStep(arr.ToArray()));
-        }
-
-        private async Task MergeRec(int[] arr, int left, int right,
-            Action<SortStep> onStep, int delay, CancellationToken token)
-        {
-            if (left >= right)
-                return;
-
-            int mid = (left + right) / 2;
-
-            await MergeRec(arr, left, mid, onStep, delay, token);
-            await MergeRec(arr, mid + 1, right, onStep, delay, token);
-
-            await Merge(arr, left, mid, right, onStep, delay, token);
-        }
-
-        private async Task Merge(
-            int[] arr, int left, int mid, int right,
-            Action<SortStep> onStep, int delay, CancellationToken token)
-        {
-            int[] temp = new int[right - left + 1];
-
-            int i = left;
-            int j = mid + 1;
-            int k = 0;
-
-            while (i <= mid && j <= right)
+            async Task Merge(int[] arr, int l, int r)
             {
-                token.ThrowIfCancellationRequested();
-                MainForm.LastComparisons++;
+                if (l >= r) return;
 
-                onStep(new SortStep(arr.ToArray(), compareA: i, compareB: j));
-                await Task.Delay(delay, token);
+                int m = (l + r) / 2;
+                await Merge(arr, l, m);
+                await Merge(arr, m + 1, r);
 
-                if (arr[i] <= arr[j]) temp[k++] = arr[i++];
-                else temp[k++] = arr[j++];
-            }
+                int[] temp = new int[r - l + 1];
+                int i = l, j = m + 1, k = 0;
 
-            while (i <= mid) temp[k++] = arr[i++];
-            while (j <= right) temp[k++] = arr[j++];
+                while (i <= m && j <= r)
+                {
+                    token.ThrowIfCancellationRequested();
 
-            // перезапись
-            for (int t = 0; t < temp.Length; t++)
-            {
-                arr[left + t] = temp[t];
-                MainForm.LastWrites++;
+                    onCompare();
 
-                onStep(new SortStep(arr.ToArray(), swapA: left + t));
-                await Task.Delay(delay, token);
+                    if (arr[i] <= arr[j])
+                        temp[k++] = arr[i++];
+                    else
+                        temp[k++] = arr[j++];
+                }
+
+                while (i <= m) temp[k++] = arr[i++];
+                while (j <= r) temp[k++] = arr[j++];
+
+                for (int x = 0; x < temp.Length; x++)
+                {
+                    onWrite();
+                    arr[l + x] = temp[x];
+                    onStep(new SortStep(arr[..], writeIndex: l + x));
+                    await Task.Delay(delay, token);
+                }
             }
         }
     }

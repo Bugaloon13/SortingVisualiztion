@@ -1,4 +1,6 @@
 
+using SortingVisualizer.Visualization;
+
 namespace SortingVisualizer
 {
     public interface ISortAlgorithm
@@ -9,6 +11,10 @@ namespace SortingVisualizer
             int[] array,
             Action<SortStep> onStep,
             int delay,
-            CancellationToken token);
+            CancellationToken token,
+            Action onCompare,
+            Action onSwap,
+            Action onWrite
+        );
     }
 }

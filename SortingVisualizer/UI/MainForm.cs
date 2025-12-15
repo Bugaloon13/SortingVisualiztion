@@ -1,42 +1,33 @@
 
+using SortingVisualizer.Visualization;
 
 namespace SortingVisualizer
 {
-    public partial class MainForm : Form   
+    public partial class MainForm : Form
     {
-        private int[]? array;
-        private ArrayDrawer drawer;
-        private SortContext context;
-        private CancellationTokenSource? cts;
-        public static int LastComparisons = 0;
-        public static int LastSwaps = 0;      
-        public static int LastWrites = 0;     
+        private int[] baseArray;
+        
+        private void ShowInfo(string algorithmName)
+        {
+            var info = AlgorithmInfoProvider.GetInfo(algorithmName);
 
+            var form = new AlgorithmInfoForm(
+                info
+            );
+
+            form.ShowDialog(this);
+        }
 
         public MainForm()
         {
             InitializeComponent();
-            typeof(Panel).InvokeMember("DoubleBuffered",
-                System.Reflection.BindingFlags.SetProperty |
-                System.Reflection.BindingFlags.Instance |
-                System.Reflection.BindingFlags.NonPublic,
-                null, panelDisplay, new object[] { true });
+            btnInfoBubble.Click += (_, _) => ShowInfo("Bubble Sort");
+            btnInfoSelection.Click += (_, _) => ShowInfo("Selection Sort");
+            btnInfoInsertion.Click += (_, _) => ShowInfo("Insertion Sort");
+            btnInfoQuick.Click += (_, _) => ShowInfo("Quick Sort");
+            btnInfoMerge.Click += (_, _) => ShowInfo("Merge Sort");
+            btnInfoHeap.Click += (_, _) => ShowInfo("Heap Sort");
 
-
-            drawer = new ArrayDrawer(panelDisplay);
-            context = new SortContext();
-
-            comboAlgorithms.Items.Add(new BubbleSort());
-            comboAlgorithms.Items.Add(new SelectionSort());
-            comboAlgorithms.Items.Add(new InsertionSort());
-            comboAlgorithms.Items.Add(new QuickSort());
-            comboAlgorithms.Items.Add(new MergeSort());
-            comboAlgorithms.Items.Add(new HeapSort());
-
-            comboAlgorithms.DisplayMember = "Name";
-            comboAlgorithms.SelectedIndex = 0;
-
-            // Привязываем кнопки
             btnGenerate.Click += btnGenerate_Click;
             btnStart.Click += btnStart_Click;
             btnStop.Click += btnStop_Click;
@@ -44,148 +35,88 @@ namespace SortingVisualizer
 
         private void btnGenerate_Click(object sender, EventArgs e)
         {
-            array = ArrayGenerator.Generate((int)numSize.Value, panelDisplay.Height);
-            drawer.Draw(new SortStep(array));
+            baseArray = ArrayGenerator.Generate(
+                (int)numSize.Value,
+                150
+            );
+
+            tablePanel.Controls.Clear();
+            tablePanel.RowStyles.Clear();
+            tablePanel.RowCount = 0;
+
+            var algorithms = new List<ISortAlgorithm>();
+
+            if (chkBubble.Checked) algorithms.Add(new BubbleSort());
+            if (chkSelection.Checked) algorithms.Add(new SelectionSort());
+            if (chkInsertion.Checked) algorithms.Add(new InsertionSort());
+            if (chkQuick.Checked) algorithms.Add(new QuickSort());
+            if (chkMerge.Checked) algorithms.Add(new MergeSort());
+            if (chkHeap.Checked) algorithms.Add(new HeapSort());
+
+            int colCount = tablePanel.ColumnCount;
+            int index = 0;
+
+            foreach (var alg in algorithms)
+            {
+                int row = index / colCount;
+                int col = index % colCount;
+
+                if (row >= tablePanel.RowCount)
+                {
+                    tablePanel.RowCount++;
+                    tablePanel.RowStyles.Add(
+                        new RowStyle(SizeType.Percent, 100f)
+                    );
+                }
+
+                var view = new SortView(alg, baseArray);
+                view.SetInitialArray(baseArray);   
+                tablePanel.Controls.Add(view, col, row);
+
+                index++;
+            }
         }
 
         private async void btnStart_Click(object sender, EventArgs e)
         {
-            if (array == null)
+            if (tablePanel.Controls.Count == 0)
             {
-                MessageBox.Show("Сначала сгенерируйте массив.");
+                MessageBox.Show("Сначала нажмите Generate");
                 return;
             }
-
-            if (comboAlgorithms.SelectedItem is not ISortAlgorithm algorithm)
-            {
-                MessageBox.Show("Выберите алгоритм.");
-                return;
-            }
-
-            MainForm.LastComparisons = 0;
-            MainForm.LastSwaps = 0;
-            MainForm.LastWrites = 0;
-
-            lblComparisons.Text = "Comparisons: 0";
-            lblSwaps.Text       = "Swaps: 0";
-            lblWrites.Text      = "Writes: 0";
 
             btnStart.Enabled = false;
             btnGenerate.Enabled = false;
-            btnCompare.Enabled = false;
-            comboAlgorithms.Enabled = false;
-            btnStop.Enabled = true;
 
-            cts?.Cancel();
-            cts = new CancellationTokenSource();
-            context.Algorithm = algorithm;
+            var tasks = new List<Task>();
+
+            foreach (Control c in tablePanel.Controls)
+            {
+                if (c is SortView view)
+                {
+                    tasks.Add(view.StartAsync(trackSpeed.Value));
+                }
+            }
 
             try
             {
-                var sw = System.Diagnostics.Stopwatch.StartNew();
-
-                await context.RunAsync(
-                    array,
-                    step =>
-                    {
-                        drawer.Draw(step);
-                        lblComparisons.Text = $"Comparisons: {MainForm.LastComparisons}";
-                        lblSwaps.Text       = $"Swaps: {MainForm.LastSwaps}";
-                        lblWrites.Text      = $"Writes: {MainForm.LastWrites}";
-                    },
-                    trackSpeed.Value,
-                    cts.Token
-                );
-
-                sw.Stop();
+                await Task.WhenAll(tasks);
             }
-            catch (OperationCanceledException)
+            catch
             {
             }
-            finally
-            {
-                btnStart.Enabled = true;
-                btnGenerate.Enabled = true;
-                btnCompare.Enabled = true;
-                comboAlgorithms.Enabled = true;
-                btnStop.Enabled = false;
-            }
+
+            btnStart.Enabled = true;
+            btnGenerate.Enabled = true;
         }
-
-
-
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            cts?.Cancel();
-        }
-        
-        
-        
-        private async void btnCompare_Click(object sender, EventArgs e)
-        {
-            if (array == null)
+            foreach (Control c in tablePanel.Controls)
             {
-                MessageBox.Show("Сначала сгенерируйте массив.");
-                return;
+                if (c is SortView view)
+                    view.Stop();
             }
-
-            btnCompare.Enabled = false;
-            btnStart.Enabled = false;
-            btnGenerate.Enabled = false;
-            comboAlgorithms.Enabled = false;
-            btnStop.Enabled = false;
-
-            int[] original = array.ToArray();
-
-            var algorithms = new ISortAlgorithm[]
-            {
-                new BubbleSort(),
-                new SelectionSort(),
-                new InsertionSort(),
-                new QuickSort(),
-                new MergeSort(),
-                new HeapSort()
-            };
-
-            var results = new List<AlgorithmResult>();
-
-            foreach (var alg in algorithms)
-            {
-                int[] arrCopy = original.ToArray();
-
-                MainForm.LastComparisons = 0;
-                MainForm.LastSwaps = 0;
-
-                var sw = System.Diagnostics.Stopwatch.StartNew();
-
-                await alg.Sort(
-                    arrCopy,
-                    step => { }, 
-                    0,
-                    CancellationToken.None
-                );
-
-                sw.Stop();
-
-                results.Add(new AlgorithmResult
-                {
-                    Algorithm = alg.Name,
-                    TimeMs = sw.ElapsedMilliseconds,
-                    Comparisons = MainForm.LastComparisons,
-                    Swaps = MainForm.LastSwaps,
-                    Writes = MainForm.LastWrites
-                });
-            }
-
-            var form = new ComparisonForm();
-            form.ShowResults(results);
-            form.Show();
-
-            btnCompare.Enabled = true;
-            btnStart.Enabled = true;
-            btnGenerate.Enabled = true;
-            comboAlgorithms.Enabled = true;
         }
         
     }

@@ -1,5 +1,7 @@
 
 
+using SortingVisualizer.Visualization;
+
 namespace SortingVisualizer
 {
     public class ArrayDrawer

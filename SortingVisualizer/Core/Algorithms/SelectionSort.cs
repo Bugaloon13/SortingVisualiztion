@@ -1,4 +1,5 @@
 
+using SortingVisualizer.Visualization;
 
 namespace SortingVisualizer
 {
@@ -8,43 +9,40 @@ namespace SortingVisualizer
 
         public async Task Sort(
             int[] array,
-            Action<SortStep> onStep,
+            System.Action<SortStep> onStep,
             int delay,
-            CancellationToken token)
+            CancellationToken token,
+            System.Action onCompare,
+            System.Action onSwap,
+            System.Action onWrite)
         {
-            MainForm.LastComparisons = 0;
-            MainForm.LastSwaps = 0;
-            MainForm.LastWrites = 0;
+            int n = array.Length;
 
-            for (int i = 0; i < array.Length - 1; i++)
+            for (int i = 0; i < n - 1; i++)
             {
-                int minIndex = i;
+                int min = i;
 
-                for (int j = i + 1; j < array.Length; j++)
+                for (int j = i + 1; j < n; j++)
                 {
                     token.ThrowIfCancellationRequested();
 
-                    MainForm.LastComparisons++;
-
-                    onStep(new SortStep(array.ToArray(), compareA: minIndex, compareB: j));
+                    onCompare();
+                    onStep(new SortStep(array[..], compareA: min, compareB: j));
                     await Task.Delay(delay, token);
 
-                    if (array[j] < array[minIndex])
-                        minIndex = j;
+                    if (array[j] < array[min])
+                        min = j;
                 }
 
-                if (minIndex != i)
+                if (min != i)
                 {
-                    MainForm.LastSwaps++;
+                    onSwap();
+                    (array[i], array[min]) = (array[min], array[i]);
 
-                    (array[i], array[minIndex]) = (array[minIndex], array[i]);
-
-                    onStep(new SortStep(array.ToArray(), swapA: i, swapB: minIndex));
+                    onStep(new SortStep(array[..], swapA: i, swapB: min));
                     await Task.Delay(delay, token);
                 }
             }
-
-            onStep(new SortStep(array.ToArray()));
         }
     }
 }
