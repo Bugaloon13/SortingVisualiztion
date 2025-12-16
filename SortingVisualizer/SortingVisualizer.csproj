@@ -12,7 +12,7 @@
       <Compile Update="UI\ComparisonForm.cs">
         <SubType>Form</SubType>
       </Compile>
-      <Compile Update="AlgorithmInfoForm.cs">
+      <Compile Update="UI\AlgorithmInfoForm.cs">
         <SubType>Form</SubType>
       </Compile>
     </ItemGroup>
