@@ -9,12 +9,12 @@ namespace SortingVisualizer
 
         public async Task Sort(
             int[] array,
-            System.Action<SortStep> onStep,
+            Action<SortStep> onStep,
             int delay,
             CancellationToken token,
-            System.Action onCompare,
-            System.Action onSwap,
-            System.Action onWrite)
+            Action onCompare,
+            Action onSwap,
+            Action onWrite)
         {
             int n = array.Length;
 
